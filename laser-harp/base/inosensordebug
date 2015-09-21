@@ -1,0 +1,55 @@
+//This example shows how to use the Mux Shield for analog inputs
+
+#include <MuxShield.h>
+
+//Initialize the Mux Shield
+MuxShield muxShield;
+
+#define MX_ONE IO1AnalogVals
+#define MX_TWO IO2AnalogVals
+#define MX_TRE IO3AnalogVals
+
+#define P(x) Serial.print(x)
+#define PL(x) Serial.println(x)
+
+void setup()
+{
+    //Set I/O 1, I/O 2, and I/O 3 as analog inputs
+    muxShield.setMode(1,ANALOG_IN);
+    muxShield.setMode(2,ANALOG_IN);
+    muxShield.setMode(3,ANALOG_IN);
+    
+    Serial.begin(115200);
+}
+
+//Arrays to store analog values after recieving them
+int IO1AnalogVals[16];
+int IO2AnalogVals[16];
+int IO3AnalogVals[16];
+
+void loop()
+{
+  for (int i=0; i<16; i++)
+  {
+    //Analog read on all 16 inputs on IO1, IO2, and IO3
+    IO1AnalogVals[i] = muxShield.analogReadMS(1,i);
+    IO2AnalogVals[i] = muxShield.analogReadMS(2,i);
+    IO3AnalogVals[i] = muxShield.analogReadMS(3,i);
+  }
+  
+  //Print IO1 values for inspection
+  for (int i=0; i<16; i++)
+  {
+    P(i);
+    P(" ");
+    PL( MX_ONE[i] );
+
+    P(i+16);
+    P(" ");
+    PL( MX_TRE[i] );
+  }
+
+  P(32);
+  P(" ");
+  PL( MX_TWO[32] );
+}

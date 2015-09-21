@@ -1,0 +1,36 @@
+#include <OSCMessage.h>
+#include <Ethernet.h>
+#include <EthernetUdp.h>
+#include <SPI.h>    
+
+EthernetUDP Udp;
+
+//the Arduino's IP and MAC
+IPAddress my_ip(10, 42, 16, 127);
+byte mac[] = { 0x02, 0x00, 0x00, 0x02, 0x30, 0x17 };
+
+//destination IPs
+IPAddress ip1(10, 42, 16, 6);
+const unsigned int outPort = 7778;
+
+
+void setup() 
+{
+  Ethernet.begin(mac, my_ip);
+  Udp.begin(8888);
+
+  Serial.begin(115200);
+  Serial.println("Arduino waking up!");
+}
+
+int i=0;
+void loop()
+{
+  Serial.println("sending");
+  OSCMessage msg("/debug");
+  msg.add(i++);
+  Udp.beginPacket(ip1, outPort);
+  msg.send(Udp);   
+  Udp.endPacket();
+  msg.empty();
+}
