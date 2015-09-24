@@ -30,8 +30,8 @@
 #define LIGHTS_PIN  3
 #define N_LIGHTS    52
 
-const int lights_per_piezo[] = { 12,  10, 11, 10, 0,  0   };
-const int index_per_shroom[] = {  0,  12, 22, 33, 42, 42  };
+const int lights_per_piezo[] = { 12,  10, 11, 10, 10,  10 };
+const int index_per_shroom[] = {  0,  12, 22, 33, 43, 53, 63 };
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LIGHTS, LIGHTS_PIN, NEO_RGB + NEO_KHZ800);
 
