@@ -9,7 +9,10 @@
 #define PL(x) Serial.println(x)
 
 #define N_LASERS  33
-#define THRESHOLD 512
+#define THRESHOLD 50
+#define T_CUTOFF 30
+
+
 //#define LIGHT_THRESH_DOWN 100
 //#define LIGHT_THRESH_UP   100
 
@@ -37,7 +40,9 @@ struct laser_s
   int previousValue;
 
   /*  track states */
-  int state;
+  bool active;
+
+  int time_played;
 };
 
 laser_s lasers[N_LASERS]; 
@@ -54,28 +59,28 @@ void sendNoteOn( int id )
   msg.empty();
 }
 
-void sendNoteOff( int id)
-{
-  P("[OFF] ");
-  PL(id);
-  OSCMessage msg("/harp/base/note/off");
-  msg.add(id);
-  Udp.beginPacket(serverIP, outPort);
-  msg.send(Udp);   
-  Udp.endPacket();
-  msg.empty();
-}
-
-void sendDebug( int id, int val)
-{
-  OSCMessage msg("/");
-  msg.add(id);
-  msg.add(val);
-  Udp.beginPacket(serverIP, outPort);
-  msg.send(Udp);   
-  Udp.endPacket();
-  msg.empty();
-}
+//void sendNoteOff( int id)
+//{
+//  P("[OFF] ");
+//  PL(id);
+//  OSCMessage msg("/harp/base/note/off");
+//  msg.add(id);
+//  Udp.beginPacket(serverIP, outPort);
+//  msg.send(Udp);   
+//  Udp.endPacket();
+//  msg.empty();
+//}
+//
+//void sendDebug( int id, int val)
+//{
+//  OSCMessage msg("/");
+//  msg.add(id);
+//  msg.add(val);
+//  Udp.beginPacket(serverIP, outPort);
+//  msg.send(Udp);   
+//  Udp.endPacket();
+//  msg.empty();
+//}
 
 void setup()
 {
@@ -89,7 +94,8 @@ void setup()
   for(int i=0; i< N_LASERS; ++i)
   {
     lasers[i].previousValue = 0;
-    lasers[i].state = 0;
+    lasers[i].active = false;
+    lasers[i].time_played = 0;
   }
   
   //Set I/O 1, I/O 2, and I/O 3 as analog inputs
@@ -106,17 +112,37 @@ void check(int begin, int end, int mux)
   {
     int m = muxShield.analogReadMS( mux, i-begin );
 
-    if( lasers[i].state == 0 && m <= THRESHOLD )
+    if( m - lasers[i].previousValue >= THRESHOLD )
     {
-      sendNoteOff( i );
+      if( lasers[i].active == false  )
+      {
+        sendNoteOn( i );
+        lasers[i].active = true;
+        lasers[i].time_played = 0;
+      }
+      else
+      {
+        lasers[i].time_played ++;
+        P("i: ");
+        P(i);
+        P(" t: ");
+        PL(lasers[i].time_played) ;
+      }
     }
-
-    if( lasers[i].state == 1 && m >= THRESHOLD )
+    else if( lasers[i].active )
     {
-      sendNoteOn( i );
+      lasers[i].time_played ++;
+      P("i: ");
+      P(i);
+      P(" t: ");
+      PL(lasers[i].time_played) ;
+      if( lasers[i].time_played > T_CUTOFF )
+      {
+        lasers[i].time_played = 0;
+        lasers[i].active = false;
+      }
     }
-
-    m >= THRESHOLD ? lasers[i].state = 0 : lasers[i].state = 1;
+    lasers[i].previousValue = m;
   }
 }
 
@@ -133,6 +159,8 @@ void loop()
 
   //P("delta = ");
   //PL( t1 );
+  P("checking ... ");
+  PL("");
 
   ///* check the first row of 16 */
   check(0, 16, 1);
@@ -140,5 +168,6 @@ void loop()
   check(16, 32, 3);
   /* get our 33rd sensor value */
   check(32, 33, 2);
+  delayMicroseconds(5000);
 }
 
