@@ -9,7 +9,8 @@
 #define PL(x) Serial.println(x)
 
 #define N_LASERS  33
-#define THRESHOLD 50
+//#define THRESHOLD 50
+#define THRESHOLD 70
 #define T_CUTOFF 30
 
 
@@ -47,10 +48,13 @@ struct laser_s
 
 laser_s lasers[N_LASERS]; 
 
-void sendNoteOn( int id )
+void sendNoteOn( int id, int val )
 {
-  P("[ON] ");
-  PL(id);
+  P("/sent/on");
+  P(" ");
+  P(id);
+  P(" ");
+  PL(val);
   OSCMessage msg("/harp/base/note/on");
   msg.add(id);
   Udp.beginPacket(serverIP, outPort);
@@ -116,7 +120,7 @@ void check(int begin, int end, int mux)
     {
       if( lasers[i].active == false  )
       {
-        sendNoteOn( i );
+        sendNoteOn( i , m - lasers[i].previousValue);
         lasers[i].active = true;
         lasers[i].time_played = 0;
       }
@@ -159,8 +163,8 @@ void loop()
 
   //P("delta = ");
   //PL( t1 );
-  P("checking ... ");
-  PL("");
+  //P("checking ... ");
+  //PL("");
 
   ///* check the first row of 16 */
   check(0, 16, 1);
@@ -168,6 +172,6 @@ void loop()
   check(16, 32, 3);
   /* get our 33rd sensor value */
   check(32, 33, 2);
-  delayMicroseconds(5000);
+  delayMicroseconds(10000);
 }
 
